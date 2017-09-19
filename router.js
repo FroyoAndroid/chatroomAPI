@@ -5,11 +5,15 @@ module.exports = (app) => {
 
     const sessionRoute = express.Router();
 
-    sessionRoute.post('/', sessionController.create);
+    sessionRoute.get('/', sessionController.getAllRoom);
 
-    sessionRoute.get('/:roomID', sessionController.getSessionForRoom);
+    sessionRoute.post('/', sessionController.createRoom);
 
-    app.use('/room', sessionRoute);
+    sessionRoute.get('/:roomID', sessionController.getSessionInfoForRoom);
+
+    sessionRoute.post('/token', sessionController.createToken);
+
+    app.use('/rooms', sessionRoute);
 
     app.use('/', (request, response) => {
         return response.status(200).send('Welecom to TokboxAPI');

@@ -1,18 +1,24 @@
 const config = require('../config/config'),
-        Room = require('../models/room');
+    Room = require('../models/room');
 
-exports.createRoom = function (roomName, sessionID) {
+exports.createRoom = (roomName, sessionID) => {
 
-        let room = new Room({
-            room: roomName,
-            sessionID: sessionID
-        });
-        
-        room.save(function(error, room){
-            if(error){
-                throw error;
-            }
-            console.log('Room', room);
-        });
+    let room = new Room({
+        room: roomName,
+        sessionID: sessionID
+    });
 
+    return room.save();
+};
+
+exports.getRoom = (roomId) => {
+    let query = Room.find({
+        "_id": roomId
+    });
+    return query.exec();
+};
+
+exports.getAllRoom = () => {
+    let query = Room.find({});
+    return query.exec();
 };

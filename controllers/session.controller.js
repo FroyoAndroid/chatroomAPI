@@ -5,7 +5,7 @@ const OpenTok = require('opentok'),
     log = console.log;
 
 
-exports.create = (req, res) => {
+exports.createRoom = (req, res) => {
     let roomName = req.body.roomName;
     try {
         if (roomName) {
@@ -15,11 +15,19 @@ exports.create = (req, res) => {
                         'message': 'Session creation error'
                     });
                 } else {
-                    dbController.createRoom(roomName, session.sessionId);
-                    return res.status(201).send({
-                        'room': roomName,
-                        'session-id': session.sessionId
-                    });
+                    dbController.createRoom(roomName, session.sessionId)
+                        .then(function (room) {
+                            return res.status(201).send({
+                                'roomID': room._doc._id.toString(),
+                                'room': room._doc.room,
+                                'sessionID': room._doc.sessionID
+                            });
+                        })
+                        .catch(function (error) {
+                            return res.status(403).send({
+                                'error': error
+                            });
+                        });
                 }
 
             });
@@ -29,25 +37,69 @@ exports.create = (req, res) => {
             });
         }
     } catch (error) {
-        log(error);
         return res.status(403).send({
-            'error': "Server error."
+            'error': error
         });
     }
 
 };
 
 exports.createToken = (req, res, next) => {
-    console.log('createToken');
-    var sessionId = res.body('sessionId');
 
-    opentok.createToken(() => {
+    let sessionId = req.body.sessionID;
+    let tokenType = req.body.tokenType;
+    let username = req.body.username || '';
 
-    });
+    if (sessionId && sessionId !== '') {
+        let tokenOptions = {
+            role: tokenType || 'subscriber',
+            data: `username=${username}`
+        };
+
+        token = opentok.generateToken(sessionId, tokenOptions);
+
+        if (token) {
+            return res.status(200).send({
+                'sessionID': sessionId,
+                'token': token
+            });
+        }
+    } else {
+        return res.status(403).send({
+            'error': 'session id not provided'
+        });
+    }
+
 };
 
-exports.getSessionForRoom = (req, res, next) => {
-    console.log('GetSessionForRoom');
-    var roomID = req.params.roomID;
-    return res.status(200).send(roomID);
+exports.getSessionInfoForRoom = (req, res, next) => {
+    var roomId = req.params.roomID;
+    if (roomId) {
+        dbController.getRoom(roomId)
+            .then(function (rooms) {
+                let room = rooms[0];
+                return res.status(200).send({
+                    'roomID': room._doc._id.toString(),
+                    'room': room._doc.room,
+                    'sessionID': room._doc.sessionID
+                });
+            })
+            .catch(function (error) {
+                return res.status(200).send({});
+            });
+    } else {
+        return res.status(200).send({});
+    }
+};
+
+exports.getAllRoom = (req, res) => {
+    dbController.getAllRoom()
+        .then((rooms) => {
+            return res.status(200).send(rooms);
+        })
+        .catch((error) => {
+            return res.status(403).send({
+                'error': 'No Rooms'
+            });
+        });
 };

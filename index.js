@@ -9,7 +9,10 @@ const express = require('express'),
     config = require('./config/config'),
     log = console.log,
     router = require('./router'),
-    mongoose = require('mongoose');
+    mongoose = require('mongoose'),
+    Promise = require('bluebird');
+
+Promise.promisifyAll(mongoose);
 
 const server = app.listen(config.port);
 log(`Server is running on port ${config.port}`);
